@@ -3,10 +3,8 @@ import base64
 import os
 import requests
 
-# Set wide mode
 st.set_page_config(layout="wide")
 
-# Card data dictionary (same as before)
 cards = [
     {
         'header': 'Data Analytics Platform',
@@ -71,12 +69,15 @@ card_style = """
         border-color: #a3cef1;
     }
     .card img {
-        width: 100%;
-        height: 160px;
+        max-width: 100%;
+        max-height: 160px;
         object-fit: cover;
         border-radius: 10px;
         margin-bottom: 1rem;
         flex-shrink: 0;
+        display: block;
+        margin-left: auto;
+        margin-right: auto;
     }
     .card-header {
         font-size: 1.25rem;
@@ -117,10 +118,13 @@ card_style = """
     .card-link a:hover {
         text-decoration: underline;
     }
-    /* Ensure columns stretch equally height using display flex */
     .stColumn > div {
         display: flex;
         flex-direction: column;
+        height: 100%;
+    }
+    .row-gap {
+        margin-bottom: 2rem;
     }
 </style>
 """
@@ -182,11 +186,13 @@ def encode_image_to_base64(image_source):
 filtered_cards = filter_cards(cards, search_query)
 
 if filtered_cards:
-    num_cols = 3
+    num_cols = 4
     rows = (len(filtered_cards) + num_cols - 1) // num_cols
 
     for row in range(rows):
         cols = st.columns(num_cols, gap="large")
+        # Add a div wrapper to add bottom margin as row gap
+        st.markdown('<div class="row-gap">', unsafe_allow_html=True)
         for col_idx in range(num_cols):
             card_idx = row * num_cols + col_idx
             if card_idx >= len(filtered_cards):
@@ -213,5 +219,6 @@ if filtered_cards:
                 </div>
                 """
                 st.markdown(card_html, unsafe_allow_html=True)
+        st.markdown('</div>', unsafe_allow_html=True)
 else:
     st.info("No cards found matching your search.")
