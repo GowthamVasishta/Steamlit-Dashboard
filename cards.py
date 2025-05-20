@@ -2,9 +2,11 @@ import streamlit as st
 import base64
 import os
 import requests
-from io import BytesIO
 
-# Card data dictionary - images can be URLs or local/shared paths
+# Set wide mode
+st.set_page_config(layout="wide")
+
+# Card data dictionary (same as before)
 cards = [
     {
         'header': 'Data Analytics Platform',
@@ -15,7 +17,6 @@ cards = [
     },
     {
         'header': 'Cloud Storage Service',
-        # Example local/shared drive path (update to your actual path)
         'image': r'Z:/SharedDrive/images/cloud_storage.jpg',
         'description': 'Secure and scalable cloud storage solutions for enterprises.',
         'lob': 'Cloud Services',
@@ -30,7 +31,6 @@ cards = [
     },
     {
         'header': 'E-commerce Management',
-        # Example local/shared drive path
         'image': r'//SharedDrive/ecommerce/ecommerce_image.png',
         'description': 'Manage all your e-commerce operations seamlessly in one place.',
         'lob': 'Retail',
@@ -52,7 +52,6 @@ cards = [
     },
 ]
 
-# Inline CSS for minimalistic card styling (card container styling will be handled by Streamlit columns)
 card_style = """
 <style>
     .card {
@@ -77,6 +76,7 @@ card_style = """
         object-fit: cover;
         border-radius: 10px;
         margin-bottom: 1rem;
+        flex-shrink: 0;
     }
     .card-header {
         font-size: 1.25rem;
@@ -90,6 +90,12 @@ card_style = """
         flex-grow: 1;
         margin-bottom: 1rem;
         line-height: 1.3;
+        overflow: hidden;
+        max-height: 4.5em;  /* approx 3 lines */
+        text-overflow: ellipsis;
+        display: -webkit-box;
+        -webkit-line-clamp: 3; /* limit to 3 lines */
+        -webkit-box-orient: vertical;
     }
     .card-lob {
         font-size: 0.85rem;
@@ -97,9 +103,11 @@ card_style = """
         color: #777;
         margin-bottom: 1rem;
         font-style: italic;
+        flex-shrink: 0;
     }
     .card-link {
         text-align: right;
+        flex-shrink: 0;
     }
     .card-link a {
         color: #1a73e8;
@@ -109,12 +117,15 @@ card_style = """
     .card-link a:hover {
         text-decoration: underline;
     }
+    /* Ensure columns stretch equally height using display flex */
+    .stColumn > div {
+        display: flex;
+        flex-direction: column;
+    }
 </style>
 """
 
 st.markdown(card_style, unsafe_allow_html=True)
-
-st.title("Cards Dashboard")
 
 search_query = st.text_input(
     "Search cards by Header, Description, or LOB Name:",
@@ -122,6 +133,7 @@ search_query = st.text_input(
     key="search",
     placeholder="Type to search...",
 )
+
 
 def filter_cards(cards, query):
     if not query:
@@ -139,10 +151,11 @@ def filter_cards(cards, query):
 
 
 def encode_image_to_base64(image_source):
-    """
-    Load image from URL or file path and return base64 string.
-    Returns None if image can't be loaded.
-    """
+    import base64
+    import requests
+    from io import BytesIO
+    import os
+
     try:
         if image_source.lower().startswith("http"):
             response = requests.get(image_source, timeout=5)
@@ -152,7 +165,6 @@ def encode_image_to_base64(image_source):
             with open(image_source, "rb") as f:
                 image_bytes = f.read()
         encoded = base64.b64encode(image_bytes).decode()
-        # Detect mime type from file extension
         ext = os.path.splitext(image_source)[1].lower()
         if ext in [".jpg", ".jpeg"]:
             mime = "jpeg"
@@ -161,11 +173,9 @@ def encode_image_to_base64(image_source):
         elif ext == ".gif":
             mime = "gif"
         else:
-            # fallback to jpeg
             mime = "jpeg"
         return f"data:image/{mime};base64,{encoded}"
-    except Exception as e:
-        # Could not load or encode image
+    except Exception:
         return None
 
 
@@ -176,7 +186,7 @@ if filtered_cards:
     rows = (len(filtered_cards) + num_cols - 1) // num_cols
 
     for row in range(rows):
-        cols = st.columns(num_cols)
+        cols = st.columns(num_cols, gap="large")
         for col_idx in range(num_cols):
             card_idx = row * num_cols + col_idx
             if card_idx >= len(filtered_cards):
@@ -184,8 +194,12 @@ if filtered_cards:
             card = filtered_cards[card_idx]
             img_data_uri = encode_image_to_base64(card["image"])
             if img_data_uri is None:
-                # Use placeholder or empty image
-                img_html = f'<div style="height:160px; background:#ccc; border-radius:10px; margin-bottom:1rem; display:flex; justify-content:center; align-items:center; color:#666;">Image not found</div>'
+                img_html = (
+                    '<div style="height:160px; background:#ccc; '
+                    'border-radius:10px; margin-bottom:1rem; '
+                    'display:flex; justify-content:center; align-items:center; color:#666;">'
+                    "Image not found</div>"
+                )
             else:
                 img_html = f'<img src="{img_data_uri}" alt="{card["header"]}"/>'
             with cols[col_idx]:
